@@ -12,26 +12,30 @@ import toast, { Toaster } from "react-hot-toast";
 export default function Home() {
   const [instance, setInstance] = useState<DescribeInstanceResult>();
 
+  const load = async () => {
+    const res = await describeInstance();
+    setInstance(res);
+  };
+
   useEffect(() => {
-    (async () => {
-      const res = await describeInstance();
-      setInstance(res);
-    })();
+    load();
   }, []);
+
+  const handleReload = async () => {
+    await load();
+    toast.success("Reloaded");
+  };
 
   const handleStopInstance = async () => {
     await stopInstance();
     toast.success("Stopping the instance...");
-  };
-
-  const handleReload = async () => {
-    const res = await describeInstance();
-    setInstance(res);
+    load();
   };
 
   const handleStartInstance = async () => {
     await startInstance();
     toast.success("Starting the instance...");
+    load();
   };
 
   return (
@@ -39,9 +43,13 @@ export default function Home() {
       <p>サーバー管理アプリ</p>
       <p>State: {instance?.state}</p>
       <p>Public IP Address: {instance?.publicIpAddress}</p>
-      <button onClick={handleStopInstance}>Stop instance</button>
       <button onClick={handleReload}>Reload</button>
-      <button onClick={handleStartInstance}>Start instance</button>
+      {instance?.state === "running" && (
+        <button onClick={handleStopInstance}>Stop instance</button>
+      )}
+      {instance?.state === "stopped" && (
+        <button onClick={handleStartInstance}>Start instance</button>
+      )}
       <Toaster />
     </main>
   );
